@@ -9,6 +9,9 @@ present in the JD but missing from the resume.
 
 import re
 import string
+import threading
+import time
+import urllib.request
 
 from flask import Flask, jsonify, request
 from flask_cors import CORS
@@ -194,10 +197,30 @@ def match():
     })
 
 
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# Bot Logic & Ping Route
+# -----------------------------------------------------------------------------
+@app.route("/ping", methods=["GET"])
+def ping():
+    return jsonify({"status": "Awake"}), 200
+
+def keep_awake():
+    while True:
+        time.sleep(840)  # Wait 14 minutes
+        try:
+            # We will replace this placeholder once Render gives us the real URL
+            urllib.request.urlopen("https://YOUR_RENDER_URL_HERE.onrender.com/ping")
+        except Exception:
+            pass
+
+# -----------------------------------------------------------------------------
 # Entrypoint
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 if __name__ == "__main__":
     from waitress import serve
+    
+    # Start the background bot
+    threading.Thread(target=keep_awake, daemon=True).start()
+    
     print("Starting SkillSync API production server on http://0.0.0.0:5000")
     serve(app, host="0.0.0.0", port=5000)
