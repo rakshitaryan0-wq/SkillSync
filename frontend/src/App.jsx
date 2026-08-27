@@ -294,8 +294,7 @@ export default function SkillSync() {
     } catch (err) {
       setError(
           err instanceof TypeError
-              ? "Can't reach the backend. Make sure it's running on \"Can't reach the live backend API.\" and has CORS enabled."
-              : err.message || "Something went wrong while analyzing."
+              ? "Can't reach the backend API."
       );
     } finally {
       setIsLoading(false);
