@@ -282,7 +282,7 @@ export default function SkillSync() {
     setError(null);
     setResult(null);
     try {
-      const res = await fetch("http://127.0.0.1:5000/match", {
+      const res = await fetch("https://skillsync-y7yw.onrender.com", {
         method: "POST",
         mode: "cors",
         headers: { "Content-Type": "application/json" },
@@ -294,7 +294,7 @@ export default function SkillSync() {
     } catch (err) {
       setError(
           err instanceof TypeError
-              ? "Can't reach the backend. Make sure it's running on http://127.0.0.1:5000 and has CORS enabled."
+              ? "Can't reach the backend. Make sure it's running on \"Can't reach the live backend API.\" and has CORS enabled."
               : err.message || "Something went wrong while analyzing."
       );
     } finally {
