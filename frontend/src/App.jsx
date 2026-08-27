@@ -282,23 +282,27 @@ export default function SkillSync() {
     setError(null);
     setResult(null);
     try {
-      const res = await fetch("https://skillsync-y7yw.onrender.com", {
+      const res = await fetch("https://skillsync-y7yw.onrender.com/match", {
         method: "POST",
         mode: "cors",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ resume_text: resumeText, jd_text: jdText }),
       });
+
       if (!res.ok) throw new Error(`Server responded with ${res.status}`);
+
       const data = await res.json();
       setResult(data);
     } catch (err) {
       setError(
           err instanceof TypeError
               ? "Can't reach the backend API."
+              : err.message || "Something went wrong."
       );
     } finally {
       setIsLoading(false);
     }
+
   }
 
   useEffect(() => {

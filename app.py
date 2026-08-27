@@ -136,9 +136,11 @@ def find_missing_keywords(resume_clean: str, jd_clean: str) -> list[str]:
 # API endpoint
 # ---------------------------------------------------------------------------
 
-@app.route("/match", methods=["POST"])
+@app.route("/match", methods=["POST", "OPTIONS"])
 def match():
-    """POST /match — Compare a resume against a job description.
+    if request.method == "OPTIONS":
+        return '', 200
+        """POST /match — Compare a resume against a job description.
 
     Expected JSON payload::
 
