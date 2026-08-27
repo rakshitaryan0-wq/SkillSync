@@ -209,7 +209,7 @@ def keep_awake():
         time.sleep(840)  # Wait 14 minutes
         try:
             # We will replace this placeholder once Render gives us the real URL
-            urllib.request.urlopen("https://YOUR_RENDER_URL_HERE.onrender.com/ping")
+            urllib.request.urlopen("https://skillsync-y7yw.onrender.com")
         except Exception:
             pass
 
