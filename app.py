@@ -17,6 +17,10 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+import spacy
+
+# Load spaCy small English NLP model
+nlp = spacy.load("en_core_web_sm")
 
 # ---------------------------------------------------------------------------
 # App factory
@@ -24,90 +28,15 @@ from sklearn.metrics.pairwise import cosine_similarity
 app = Flask(__name__)
 CORS(app) # This allows external web pages to communicate with your API
 
-# ---------------------------------------------------------------------------
-# Stop-word list (standard English stop words kept inline so the service has
-# zero external data-file dependencies).
-# ---------------------------------------------------------------------------
-STOP_WORDS: set[str] = {
-    # Add these to your existing set
-    "job", "title", "company", "overview", "requirements", "join", "recent",
-    "basic", "build", "like", "key", "motivated", "robust", "solutions",
-    "user", "graduate", "student", "familiarity", "concepts", "foundational"
-    "i", "me", "my", "myself", "we", "our", "ours", "ourselves", "you",
-    "your", "yours", "yourself", "yourselves", "he", "him", "his", "himself",
-    "she", "her", "hers", "herself", "it", "its", "itself", "they", "them",
-    "their", "theirs", "themselves", "what", "which", "who", "whom", "this",
-    "that", "these", "those", "am", "is", "are", "was", "were", "be", "been",
-    "being", "have", "has", "had", "having", "do", "does", "did", "doing",
-    "a", "an", "the", "and", "but", "if", "or", "because", "as", "until",
-    "while", "of", "at", "by", "for", "with", "about", "against", "between",
-    "through", "during", "before", "after", "above", "below", "to", "from",
-    "up", "down", "in", "out", "on", "off", "over", "under", "again",
-    "further", "then", "once", "here", "there", "when", "where", "why",
-    "how", "all", "both", "each", "few", "more", "most", "other", "some",
-    "such", "no", "nor", "not", "only", "own", "same", "so", "than", "too",
-    "very", "s", "t", "can", "will", "just", "don", "should", "now",
-    "must", "proficient", "seeking", "role", "requires", "require",
-    "required", "handson", "building", "integrating", "utilizing",
-    "team", "within", "experience", "candidate", "ideal", "working",
-    "years", "knowledge", "ability", "strong", "understanding",
-    "plus", "preferred", "environment", "using", "work", "skills",
-    "development", "developer", "software", "engineer", "engineering",
-    # Extended standard English stop words and common verbs
-        "into", "any", "could", "would", "might", "may", "cannot", "isn", "aren", "wasn",
-        "weren", "hasn", "haven", "hadn", "doesn", "didn", "won", "wouldn", "shan", "shouldn",
-        "mightn", "mustn", "let", "lets", "get", "gets", "got", "make", "makes", "made",
-        "take", "takes", "took", "see", "sees", "saw", "say", "says", "said", "go", "goes",
-        "went", "come", "comes", "came", "know", "knows", "knew", "think", "thinks", "thought",
-        "look", "looks", "looked", "want", "wants", "wanted", "give", "gives", "gave", "use",
-        "uses", "used", "find", "finds", "found", "tell", "tells", "told", "ask", "asks",
-        "asked", "seem", "seems", "seemed", "feel", "feels", "felt", "try", "tries", "tried",
-        "leave", "leaves", "left", "call", "calls", "called",
-
-        # Generic Job Description and Resume filler words
-        "responsibilities", "qualifications", "duties", "summary", "objective", "education",
-        "location", "salary", "benefits", "apply", "resume", "cover", "letter", "equal",
-        "opportunity", "employer", "flexible", "remote", "onsite", "hybrid", "fulltime",
-        "parttime", "contract", "internship", "status", "description", "including", "related",
-        "field", "degree", "bachelors", "masters", "phd", "demonstrated", "proven", "excellent",
-        "good", "expert", "advanced", "intermediate", "beginner", "equivalent", "highly",
-        "dynamic", "fast", "paced", "driven", "self", "starter", "track", "record", "successful",
-        "successfully", "looking", "hire", "hiring", "member", "player", "communication",
-        "written", "verbal", "interpersonal", "analytical", "problem", "solving", "detail",
-        "oriented", "collaborative", "independent", "independently", "manage", "management",
-        "lead", "leader", "leadership", "support", "assist", "ensure", "maintain", "create",
-        "develop", "design", "implement", "execute", "deliver", "project", "projects",
-        "business", "client", "clients", "customer", "customers", "users", "impact", "value",
-        "best", "practices", "standard", "procedures", "policies", "regulatory", "compliance",
-        "system", "systems", "application", "applications", "tool", "tools", "technology",
-        "technologies", "platform", "platforms", "data", "information", "process", "processes",
-        "strategy", "strategies", "plan", "plans", "goal", "goals", "objectives", "result",
-        "results", "outcome", "outcomes", "metric", "metrics", "kpi", "kpis", "report",
-        "reports", "analysis", "analytics", "test", "testing", "quality", "assurance", "qa",
-        "production", "deployment", "deploy", "release", "maintenance", "troubleshoot",
-        "resolve", "issue", "issues", "bug", "bugs", "feature", "features", "specifications",
-        "document", "documentation", "review", "participate", "collaborate", "communicate",
-        "present", "presentation", "meeting", "meetings", "daily", "weekly", "monthly",
-        "annual", "year", "month", "months", "day", "days", "time", "schedule", "deadline",
-        "deadlines", "prioritize", "tasks", "multiple", "various", "different", "new",
-        "existing", "complex", "simple", "high", "low", "scale", "scalable", "performance",
-        "perform", "performing", "optimize", "optimization", "improve", "improvement",
-        "enhance", "enhancement", "innovate", "innovation", "creative", "creativity",
-        "passion", "passionate", "focus", "focused", "orient", "mindset", "attitude",
-        "culture", "fit", "diversity", "inclusion", "inclusive", "diverse", "background",
-        "backgrounds", "opportunities", "grow", "growth", "learn", "learning", "train",
-        "training", "mentor", "mentorship", "guide", "guidance", "coach", "coaching",
-        "feedback", "evaluate", "evaluation", "assess", "assessment", "measure", "measurement",
-        "monitor", "control", "direct", "supervise", "oversee", "coordinate", "facilitate",
-        "organize", "achieve", "accomplish", "succeed", "success", "benefit", "advantage",
-        "pro", "con", "risk", "mitigate", "mitigation", "challenge", "solution", "solve",
-        "handle", "deal", "address", "tackle", "approach", "tactic", "method", "methodology",
-        "procedure", "framework", "service", "product", "function", "functionality",
-        "architecture", "code", "script", "program", "operate", "run", "debug", "fix",
-        "repair", "upgrade", "update", "patch", "install", "configure", "setup", "initialize",
-        "start", "stop", "restart", "pause", "cancel", "delete", "remove", "destroy", "clean",
-        "clear", "format", "parse", "convert", "transform", "extract", "load", "save", "store",
-        "read", "write"
+def extract_keywords(text):
+    if not text:
+        return set()
+    doc = nlp(str(text).lower())
+    return {
+        token.text for token in doc
+        if token.pos_ in ["NOUN", "PROPN"]
+        and not token.is_punct
+        and len(token.text) > 2
     }
 
 # ---------------------------------------------------------------------------
@@ -230,36 +159,24 @@ def match():
                      "and must be non-empty strings."
         }), 400
 
-    # Strip punctuation so words like Git/GitHub are split correctly
-        import re
-        resume_text = re.sub(r'[^\w\s]', ' ', resume_text)
-        jd_text = re.sub(r'[^\w\s]', ' ', jd_text)
-    # --- Preprocessing ----------------------------------------------------
-    resume_clean = preprocess(resume_text)
-    jd_clean = preprocess(jd_text)
 
-    # Guard against edge case where preprocessing strips everything
-    if not resume_clean or not jd_clean:
-        return jsonify({
-            "error": "After preprocessing, one or both texts were empty. "
-                     "Please provide more substantive content."
-        }), 422
+    # POS Keyword extraction
+    resume_keywords = extract_keywords(resume_text)
+    jd_keywords = extract_keywords(jd_text)
 
-    # --- ML scoring -------------------------------------------------------
-    match_score = compute_match_score(resume_clean, jd_clean)
+    # Gap calculation
+    missing_keywords = list(jd_keywords - resume_keywords)
 
-    # --- Gap analysis -----------------------------------------------------
-    missing_keywords = find_missing_keywords(resume_clean, jd_clean)
-
-    # --- Response ---------------------------------------------------------
-    # Nuclear option: Force-scrub the final list before sending to React
-    junk = {"must", "proficient", "seeking", "role", "requires", "required", "handson", "building", "integrating", "utilizing", "team", "within"}
-    missing_keywords = [w for w in missing_keywords if w not in junk]
+    # Score calculation with divide-by-zero protection
+    if len(jd_keywords) > 0:
+        match_score = round((len(jd_keywords & resume_keywords) / len(jd_keywords)) * 100)
+    else:
+        match_score = 0
 
     return jsonify({
         "match_score": match_score,
         "missing_keywords": missing_keywords,
-    })
+       })
 
 
 # -----------------------------------------------------------------------------
