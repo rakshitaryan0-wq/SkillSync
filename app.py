@@ -52,15 +52,16 @@ def extract_keywords(text):
         if is_negated:
             continue
 
-        # Strip default stop words/punctuation from inside the chunk
-        clean_words = [token.text for token in chunk if not token.is_stop and not token.is_punct]
+       # Strip default stop words/punctuation from inside the chunk
+               clean_words = [token.text for token in chunk if not token.is_stop and not token.is_punct]
 
-        if clean_words:
-            term = " ".join(clean_words)
-            if term not in custom_junk and len(term) > 1:
-                keywords.add(term)
+               if clean_words:
+                   term = " ".join(clean_words)
+                   # Check if ANY junk word exists inside the new phrase
+                   if not any(junk in term for junk in custom_junk) and len(term) > 1:
+                       keywords.add(term)
 
-    return keywords
+           return keywords
 
 # ---------------------------------------------------------------------------
 # Helper — text preprocessing
