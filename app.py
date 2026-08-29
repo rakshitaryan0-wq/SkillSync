@@ -29,6 +29,10 @@ CORS(app) # This allows external web pages to communicate with your API
 # zero external data-file dependencies).
 # ---------------------------------------------------------------------------
 STOP_WORDS: set[str] = {
+    # Add these to your existing set
+    "job", "title", "company", "overview", "requirements", "join", "recent",
+    "basic", "build", "like", "key", "motivated", "robust", "solutions",
+    "user", "graduate", "student", "familiarity", "concepts", "foundational"
     "i", "me", "my", "myself", "we", "our", "ours", "ourselves", "you",
     "your", "yours", "yourself", "yourselves", "he", "him", "his", "himself",
     "she", "her", "hers", "herself", "it", "its", "itself", "they", "them",
@@ -48,7 +52,62 @@ STOP_WORDS: set[str] = {
     "team", "within", "experience", "candidate", "ideal", "working",
     "years", "knowledge", "ability", "strong", "understanding",
     "plus", "preferred", "environment", "using", "work", "skills",
-    "development", "developer", "software", "engineer", "engineering"
+    "development", "developer", "software", "engineer", "engineering",
+    # Extended standard English stop words and common verbs
+        "into", "any", "could", "would", "might", "may", "cannot", "isn", "aren", "wasn",
+        "weren", "hasn", "haven", "hadn", "doesn", "didn", "won", "wouldn", "shan", "shouldn",
+        "mightn", "mustn", "let", "lets", "get", "gets", "got", "make", "makes", "made",
+        "take", "takes", "took", "see", "sees", "saw", "say", "says", "said", "go", "goes",
+        "went", "come", "comes", "came", "know", "knows", "knew", "think", "thinks", "thought",
+        "look", "looks", "looked", "want", "wants", "wanted", "give", "gives", "gave", "use",
+        "uses", "used", "find", "finds", "found", "tell", "tells", "told", "ask", "asks",
+        "asked", "seem", "seems", "seemed", "feel", "feels", "felt", "try", "tries", "tried",
+        "leave", "leaves", "left", "call", "calls", "called",
+
+        # Generic Job Description and Resume filler words
+        "responsibilities", "qualifications", "duties", "summary", "objective", "education",
+        "location", "salary", "benefits", "apply", "resume", "cover", "letter", "equal",
+        "opportunity", "employer", "flexible", "remote", "onsite", "hybrid", "fulltime",
+        "parttime", "contract", "internship", "status", "description", "including", "related",
+        "field", "degree", "bachelors", "masters", "phd", "demonstrated", "proven", "excellent",
+        "good", "expert", "advanced", "intermediate", "beginner", "equivalent", "highly",
+        "dynamic", "fast", "paced", "driven", "self", "starter", "track", "record", "successful",
+        "successfully", "looking", "hire", "hiring", "member", "player", "communication",
+        "written", "verbal", "interpersonal", "analytical", "problem", "solving", "detail",
+        "oriented", "collaborative", "independent", "independently", "manage", "management",
+        "lead", "leader", "leadership", "support", "assist", "ensure", "maintain", "create",
+        "develop", "design", "implement", "execute", "deliver", "project", "projects",
+        "business", "client", "clients", "customer", "customers", "users", "impact", "value",
+        "best", "practices", "standard", "procedures", "policies", "regulatory", "compliance",
+        "system", "systems", "application", "applications", "tool", "tools", "technology",
+        "technologies", "platform", "platforms", "data", "information", "process", "processes",
+        "strategy", "strategies", "plan", "plans", "goal", "goals", "objectives", "result",
+        "results", "outcome", "outcomes", "metric", "metrics", "kpi", "kpis", "report",
+        "reports", "analysis", "analytics", "test", "testing", "quality", "assurance", "qa",
+        "production", "deployment", "deploy", "release", "maintenance", "troubleshoot",
+        "resolve", "issue", "issues", "bug", "bugs", "feature", "features", "specifications",
+        "document", "documentation", "review", "participate", "collaborate", "communicate",
+        "present", "presentation", "meeting", "meetings", "daily", "weekly", "monthly",
+        "annual", "year", "month", "months", "day", "days", "time", "schedule", "deadline",
+        "deadlines", "prioritize", "tasks", "multiple", "various", "different", "new",
+        "existing", "complex", "simple", "high", "low", "scale", "scalable", "performance",
+        "perform", "performing", "optimize", "optimization", "improve", "improvement",
+        "enhance", "enhancement", "innovate", "innovation", "creative", "creativity",
+        "passion", "passionate", "focus", "focused", "orient", "mindset", "attitude",
+        "culture", "fit", "diversity", "inclusion", "inclusive", "diverse", "background",
+        "backgrounds", "opportunities", "grow", "growth", "learn", "learning", "train",
+        "training", "mentor", "mentorship", "guide", "guidance", "coach", "coaching",
+        "feedback", "evaluate", "evaluation", "assess", "assessment", "measure", "measurement",
+        "monitor", "control", "direct", "supervise", "oversee", "coordinate", "facilitate",
+        "organize", "achieve", "accomplish", "succeed", "success", "benefit", "advantage",
+        "pro", "con", "risk", "mitigate", "mitigation", "challenge", "solution", "solve",
+        "handle", "deal", "address", "tackle", "approach", "tactic", "method", "methodology",
+        "procedure", "framework", "service", "product", "function", "functionality",
+        "architecture", "code", "script", "program", "operate", "run", "debug", "fix",
+        "repair", "upgrade", "update", "patch", "install", "configure", "setup", "initialize",
+        "start", "stop", "restart", "pause", "cancel", "delete", "remove", "destroy", "clean",
+        "clear", "format", "parse", "convert", "transform", "extract", "load", "save", "store",
+        "read", "write"
     }
 
 # ---------------------------------------------------------------------------
@@ -171,6 +230,10 @@ def match():
                      "and must be non-empty strings."
         }), 400
 
+    # Strip punctuation so words like Git/GitHub are split correctly
+        import re
+        resume_text = re.sub(r'[^\w\s]', ' ', resume_text)
+        jd_text = re.sub(r'[^\w\s]', ' ', jd_text)
     # --- Preprocessing ----------------------------------------------------
     resume_clean = preprocess(resume_text)
     jd_clean = preprocess(jd_text)
