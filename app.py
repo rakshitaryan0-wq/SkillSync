@@ -38,6 +38,7 @@ def extract_keywords(text):
     doc = nlp(str(text).lower())
     keywords = set()
 
+    # --- LOOP 1: Process Noun Chunks ---
     for chunk in doc.noun_chunks:
         # 1. Grammatical Negation
         is_negated = any(child.dep_ == "neg" for child in chunk.root.head.children)
@@ -59,9 +60,16 @@ def extract_keywords(text):
             term = " ".join(clean_words)
             term_words = set(term.split())
 
-            # 3. Fluff Filter (Only add if no junk words exist in the chunk)
+            # 3. Fluff Filter
             if not term_words.intersection(custom_junk) and len(term) > 1:
                 keywords.add(term)
+
+    # --- LOOP 2: Catch Orphaned Proper Nouns ---
+    for token in doc:
+        if token.pos_ == "PROPN" and len(token.text) > 1 and token.text.lower() not in custom_junk:
+            # Only add it if it isn't already part of a saved phrase
+            if not any(token.text.lower() in phrase for phrase in keywords):
+                keywords.add(token.text.lower())
 
     return keywords
 
