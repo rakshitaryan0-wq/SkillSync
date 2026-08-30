@@ -39,29 +39,31 @@ def extract_keywords(text):
     keywords = set()
 
     for chunk in doc.noun_chunks:
-        # 1. Grammatical Negation: Check if the parent verb has a 'neg' child (e.g., "do NOT have")
+        # 1. Grammatical Negation
         is_negated = any(child.dep_ == "neg" for child in chunk.root.head.children)
 
-        # 2. Proximity Negation: Check the 3 words right before the skill (e.g., "lack of experience with Docker")
+        # 2. Proximity Negation
         start_index = max(0, chunk.start - 3)
         preceding_tokens = [doc[i].text for i in range(start_index, chunk.start)]
         if any(neg in preceding_tokens for neg in negation_words):
             is_negated = True
 
-        # If flagged as negative, discard the skill completely
+        # Discard negated skills
         if is_negated:
             continue
 
-       # Strip default stop words/punctuation from inside the chunk
-               clean_words = [token.text for token in chunk if not token.is_stop and not token.is_punct]
+        # Strip default stop words/punctuation from inside the chunk
+        clean_words = [token.text for token in chunk if not token.is_stop and not token.is_punct]
 
-               if clean_words:
-                   term = " ".join(clean_words)
-                   # Check if ANY junk word exists inside the new phrase
-                   if not any(junk in term for junk in custom_junk) and len(term) > 1:
-                       keywords.add(term)
+        if clean_words:
+            term = " ".join(clean_words)
+            term_words = set(term.split())
 
-           return keywords
+            # 3. Fluff Filter (Only add if no junk words exist in the chunk)
+            if not term_words.intersection(custom_junk) and len(term) > 1:
+                keywords.add(term)
+
+    return keywords
 
 # ---------------------------------------------------------------------------
 # Helper — text preprocessing
